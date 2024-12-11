@@ -23,8 +23,8 @@ c = 3e8;
 % *%TODO* :
 % define the target's initial position and velocity. Note : Velocity
 % remains contant
-initVelocity = 30; % initial velocity is 30m/s: (+) outbound, (-) inbound
-initRange = 100;    % initial range is 50m away from radar mount
+initVelocity = -30; % initial velocity is 30m/s: (+) outbound, (-) inbound
+initRange = 45;    % initial range is 50m away from radar mount
 
 %% FMCW Waveform Generation
 
@@ -155,7 +155,7 @@ RDM = 10*log10(RDM);
 doppler_axis = linspace(-100,100,Nd);
 range_axis = linspace(-200,200,Nr/2)*((Nr/2)/400);
 figure,surf(doppler_axis,range_axis,RDM);
-
+title('Range Doppler Map');
 %% CFAR implementation
 
 %Slide Window through the complete Range Doppler Map
