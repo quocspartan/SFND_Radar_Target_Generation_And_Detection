@@ -2,7 +2,8 @@
 %% Quoc H Lam %%
 %%%%%%%%%%%%%%%%
 
-clear all
+clear all;
+close all; 
 clc;
 
 %% Radar Specifications 
@@ -23,7 +24,7 @@ c = 3e8;
 % define the target's initial position and velocity. Note : Velocity
 % remains contant
 initVelocity = 30; % initial velocity is 30m/s: (+) outbound, (-) inbound
-initRange = 30;    % initial range is 50m away from radar mount
+initRange = 100;    % initial range is 50m away from radar mount
 
 %% FMCW Waveform Generation
 
@@ -73,8 +74,8 @@ for i=1:length(t)
     % *%TODO* :
     %For each time sample we need update the transmitted and
     %received signal. 
-    Tx(i) = cos( 2 * pi * ( fc * t(i) + slope * t(i)^2 /2 ) );
-    Rx(i) = cos( 2 * pi * ( fc * (t(i) - td(i)) + ( slope * ( t(i) - td(i) )^2) / 2 ) );
+    Tx(i) = cos(2 * pi * (fc * t(i) + slope * t(i)^2 * 0.5));
+    Rx(i) = cos(2 * pi * (fc * (t(i) - td(i)) + (slope * (t(i) - td(i))^2) * 0.5));
     
     % *%TODO* :
     %Now by mixing the Transmit and Receive generate the beat signal
@@ -161,17 +162,22 @@ figure,surf(doppler_axis,range_axis,RDM);
 
 % *%TODO* :
 %Select the number of Training Cells in both the dimensions.
+Tr = 8;
+Td = 8;
 
 % *%TODO* :
 %Select the number of Guard Cells in both dimensions around the Cell under 
 %test (CUT) for accurate estimation
+Gr = 4; 
+Gd = 4; 
 
 % *%TODO* :
 % offset the threshold by SNR value in dB
+offset = 15; 
 
 % *%TODO* :
 %Create a vector to store noise_level for each iteration on training cells
-noise_level = zeros(1,1);
+noiseLevel = zeros(1,1);
 
 
 % *%TODO* :
@@ -184,33 +190,39 @@ noise_level = zeros(1,1);
 %Further add the offset to it to determine the threshold. Next, compare the
 %signal under CUT with this threshold. If the CUT level > threshold assign
 %it a value of 1, else equate it to 0.
-
-
-   % Use RDM[x,y] as the matrix from the output of 2D FFT for implementing
-   % CFAR
-
-
-
-
+    noiseAndOffset = zeros(size(RDM));
+    trainingCells = (2*Tr+2*Gr+1)*(2*Td+2*Gd+1) - (2*Gr+1)*(2*Gd+1);
+    % Use RDM[x,y] as the matrix from the output of 2D FFT for implementing
+    % CFAR
+    for i = (Tr + Gr) + 1 : Nr/2 - (Tr + Gr)
+        for j = (Td + Gd) + 1 : Nd - (Td + Gd)
+            trainingArea = RDM(i-Gr-Tr : i+Gr+Tr, j-Gd-Td : j+Gd+Td);
+            sumTrainingArea = sum(trainingArea, "all");
+            guardingArea = RDM(i-Gr : i+Gr, j-Gd : j+Gd); 
+            sumGuardingArea = sum(guardingArea, "all");
+            sumNoiseLevel = sumTrainingArea - sumGuardingArea; 
+            noiseLevel = sumNoiseLevel/trainingCells; 
+            noiseAndOffset(i,j) = noiseLevel + offset;
+        end
+    end
 
 % *%TODO* :
 % The process above will generate a thresholded block, which is smaller 
 %than the Range Doppler Map as the CUT cannot be located at the edges of
 %matrix. Hence,few cells will not be thresholded. To keep the map size same
 % set those values to 0. 
- 
-
-
-
-
-
-
-
-
+    CFAROutput = zeros(size(RDM));
+    for i = (Tr + Gr) + 1 : Nr/2 - (Tr + Gr)
+        for j = (Td + Gd) + 1 : Nd - (Td + Gd)
+            if (RDM(i,j) > noiseAndOffset(i,j))
+                CFAROutput(i,j) = 1;
+            end
+        end
+    end
 % *%TODO* :
 %display the CFAR output using the Surf function like we did for Range
 %Doppler Response output.
-figure,surf(doppler_axis,range_axis,'replace this with output');
+figure,surf(doppler_axis,range_axis,CFAROutput);
 colorbar;
 
 
