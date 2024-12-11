@@ -9,7 +9,8 @@
 [image6]: ./media/RangeDopplerMap.png "Range Doppler Map"
 [image7]: ./media/RangeSpectrum.png "Range Spectrum"
 [image8]: ./media/SignalPropagationModel_MovingTarget.png "Signal Progagation Model"
-
+[image9]: ./media/CFAR_2D_Output_offset_5dB.png "CFAR Output - 5dB"
+[image10]: ./media/CFAR_2D_Output_offset_20dB.png "CFAR Output - 20dB"
 
 ## Project Flow Chart
 ![alt text][image5]
@@ -56,20 +57,33 @@ Applying the 2 dimensional FFT on the beat signal to get Range Doppler Spectrum,
 ## 7. CA-CFAR implementation
 Applying the 2 dimensional CA-CFAR on the RDM for target detection.
 
-### CA-CFAR algorithm:
+### CA-CFAR implementation steps:
 1. Determine the number of Training cells/Guard cells on range/doppler dimension.
 2. Slide the cell under test across the complete matrix. Make sure the Cell Under Test (**CUT**) has margin for Training and Guard cells from the edges.
 3. For every iteration over range/doppler dimension, compute the average of the summed values for all of the training cells used. That's the estimated noise level
 5. Further add the offset to it to determine the threshold.
 6. Next, compare the signal under CUT against this threshold.
-7. If the CUT level > threshold assign the filtered signal a value of 1.
+7. If the CUT level > threshold assign the filtered signal a value of 1, otherwise suppressed as 0. 
 
 
 #### Sliding Window Design:
 ![alt text][image1]
 
-* CA-CFAR Result - 3D View
+After multiple tuning rounds of training/guard cells and offset, I finally come up with their best values with respect to this test scenario: 
+- Training cells Range/Doppler = 8
+- Guard cells Range/Doppler = 4
+- Offset = 15 dB
+
+I have tried with different offset values (5dB, 15dB, 20dB). When offset is small as 5dB, CFAR couldn't suppress the noise well. And offset is 20dB is too large, the target detection filtered out, so 15dB is the best fit value. 
+
+* CA-CFAR Result - 5dB
+![alt text][image9]
+
+* CA-CFAR Result - 20dB
+![alt text][image10]
+
+* CA-CFAR Result - 15dB
 ![alt text][image2]
 
-* CA-CFAR Result - 2D View
+* CA-CFAR Result - 15dB (2D View)
 ![alt text][image3]
